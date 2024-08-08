@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
+use App\Models\Technology;
 use App\Models\Type;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +21,7 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
 
-        
+
 
         // Recupera tutti i tipi per il dropdown
         $types = Type::all();
@@ -49,10 +50,12 @@ class ProjectController extends Controller
      */
     public function create()
     {
+        $technologies = Technology::all();
+
         //Questo codice recupera tutti i record dalla tabella types e li memorizza nella variabile $types.
         $types = Type::all();
         // Passa i tipi di progetto alla vista attraverso compact ('types'), che li trasforma in array associativi.
-        return view('admin.project.create', compact('types'));
+        return view('admin.project.create', compact('types', 'technologies'));
     }
 
     /**
@@ -63,7 +66,7 @@ class ProjectController extends Controller
         // Valida i dati della richiesta usando la classe StoreProjectRequest
         $data = $request->validated();
 
-        $current_user= Auth::user()->id;
+        $current_user = Auth::user()->id;
 
         // Crea uno slug basato sul titolo fornito
         $data['slug'] = Str::of($data['title'])->slug('-');
@@ -80,6 +83,7 @@ class ProjectController extends Controller
         // Crea una nuova istanza del modello Project
         $project = new Project();
 
+
         // Assegna il percorso dell'immagine al modello
         $project->cover_image = $img_path;
 
@@ -93,9 +97,17 @@ class ProjectController extends Controller
             $project->type_id = $data['type_id'];
         }
 
-        $project->user_id= $current_user;
+        $project->user_id = $current_user;
         // Salva il nuovo progetto nel database
         $project->save();
+ 
+
+        //INSERIRE LA COMPILAZIONE DELLA TABELLA PIVOT DOPO LA CONVALIDAZIONE PER FAR SI DI ASSEGNARE UN IDENTIFICATIVO (ID) A TECHNOLOGIES
+        // SE NELLA RICHIESTA è PRESENTE UNA TECHNOLOGIA
+        if ($request->has('technologies')) {
+            // Aggiunge le tecnologie selezionate alla tabella pivot
+            $project->technologies()->attach($request->technologies);
+        }
 
         // Reindirizza alla pagina del progetto appena creato con un messaggio di successo
         return redirect()->route('admin.projects.show', $project->slug)->with('success', 'Project created successfully');
@@ -105,9 +117,10 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
+        $technologies = Technology::all();
         //  $project = Project::where('slug', $slug)->first();
         // // Passa il progetto specifico alla vista
-        return view('admin.project.show', compact('project'));
+        return view('admin.project.show', compact('project', 'technologies'));
     }
 
     /**
@@ -115,10 +128,10 @@ class ProjectController extends Controller
      */
     public function edit(Project $project)
     {
-
+        $technologies = Technology::all();
         //Questo codice recupera tutti i record dalla tabella types e li memorizza nella variabile $types.
         $types = Type::all();
-        return view('admin.project.edit', compact('project', 'types'));
+        return view('admin.project.edit', compact('project', 'types', 'technologies'));
     }
 
     /**
@@ -152,7 +165,7 @@ class ProjectController extends Controller
         $project->description = $data['description'];
         $project->slug = $data['slug'];
 
-        // Se è presente un ID di tipo, aggiorna la tipologia del progetto
+        // Se è presente un ID di type, aggiorna la tipologia del progetto
         if (isset($data['type_id'])) {
             $project->type_id = $data['type_id'];
         }
@@ -164,6 +177,14 @@ class ProjectController extends Controller
 
         // Salva le modifiche del progetto nel database
         $project->save();
+
+        if ($request->has('technologies')){
+            // Aggiorna le tecnologie del progetto con le nuove selezionate
+            $project->technologies()->sync($request->technologies);
+        }else{
+            // Se non è stata fornita una nuova tecnologia, elimina le tecnologie associate al progetto
+            $project->technologies()->detach();  // or $project->technologies()->delete();  // alternative method to detach all records, but not delete the pivot table records if needed.  The pivot table records will be deleted when you delete the project record.  If you want to keep the pivot table records, use detach() instead.  This method will also delete all the pivot table records.  The pivot table records will be deleted when you delete the project record.  If you want to keep the pivot table records, use detach() instead.  This method will also delete all the pivot table records.  The pivot table records will be deleted when you delete the project record.  If you want to keep the pivot table records, use detach() instead.  This method will also delete all the pivot table records.  The pivot table records will
+        }
 
         // Reindirizza alla pagina del progetto appena aggiornato con un messaggio di successo
         return redirect()->route('admin.projects.show', $project->slug)->with('success', 'Project updated successfully');
@@ -183,5 +204,12 @@ class ProjectController extends Controller
         // Elimina il progetto dal database
         $project->delete();
         return redirect()->route('admin.projects.index')->with('success', 'Project deleted successfully.');
+
+        //AVENDO GESTITA IN MANIERA PREVENTIVA LA CANCELLAZIONE DEI DATI PRESENTI NELLA TABELLA PIOVT DI TECNOLOGIES CASCADEONDELETE, 
+        //IN QUESTO CASO NON CE NE SARà BISOGNO, MA è MEGLIO IN CASO NON SI CONOSCA IL CODICE ADATTARE UN MODO PREVENTIVO PER FAR SI CHE LA CANCELLAZIONE AVVENGA COMUNQUE NEL DB
+        // // Se esistono tecnologie associate, elimina le relazioni con il progetto, modo 1
+        // $project->technologies()->detach();
+        //modo 2
+        //$project->technologies()->sync([]); 
     }
 }

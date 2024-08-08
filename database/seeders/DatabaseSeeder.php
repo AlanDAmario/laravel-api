@@ -18,5 +18,13 @@ class DatabaseSeeder extends Seeder
         //     'name' => 'Test User',
         //     'email' => 'test@example.com',
         // ]);
+
+        // AL RILANCIO DEL SEEDERE SENZA UNO SPECIFICO, DB:SEED, VERRANNO RILANCIATI AUTOMATICAMNETE TUTTI I SEEDER DICHIARATI
+        // $this->call([
+        //     ProjectSeeder::class,
+        //     TechnologySeeder::class,
+        //     TypeSeeder::class,
+        //     ProjectTechnologySeeder::class,
+        // ]);
     }
 }

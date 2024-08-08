@@ -17,7 +17,7 @@
                 <label for="exampleFormControlTextarea1" class="form-label">Modifica descrizione</label>
                 <textarea class="form-control border border-black" id="project-description" name="description" rows="3"> {{ old('description', $project->description) }}</textarea>
             </div>
-            <div class="d-flex my-3 gap-5">
+            <div class="d-flex my-2 gap-5">
                 <div class="mb-3 col-5">
                     <label for="formFileMultiple" class="form-label">Modifica immagine</label>
                     <input class="form-control" type="file" id="project-image" name="cover_image">
@@ -26,12 +26,37 @@
                     <label for="formFileMultiple" class="form-label">Inserisci una tipologia</label>
                     <select class="form-select" aria-label="Default select example" name="type_id">
                         <option selected disabled value="">Type</option>
+
                         @foreach ($types as $type)
-                            <option value="{{ $type->id }}" @if (old('type_id') == $type->id) selected @endif>
+                            <option value="{{ $type->id }}" @if (old('type_id', $project->type?->id) == $type->id) selected @endif>
                                 {{ $type->title }}</option>
                         @endforeach
 
                     </select>
+                </div>
+            </div>
+            <div class="py-1">
+                <div>
+                    <label for="formFileMultiple" class="form-label">Seleziona tecnologia</label>
+                </div>
+                <div>
+                    @foreach ($technologies as $technology)
+                        <div class="form-check form-check-inline">
+                            @if ($errors->any())
+                                <input class="form-check-input" type="checkbox" name="technologies[]"
+                                    id="technology--{{ $technology->id }}" value="{{ $technology->id }}"
+                                    {{ in_array($technology->id, old('technologies', $project->technologies)) ? 'checked' : '' }}>
+                                <label class="form-check-label"
+                                    for="technology--{{ $technology->id }}">{{ $technology->title }}</label>
+                            @else
+                                <input class="form-check-input" type="checkbox" name="technologies[]"
+                                    id="technology--{{ $technology->id }}" value="{{ $technology->id }}"
+                                    {{ $project->technologies->contains($technology) ? 'checked' : '' }}>
+                                <label class="form-check-label"
+                                    for="technology--{{ $technology->id }}">{{ $technology->title }}</label>
+                            @endif
+                        </div>
+                    @endforeach
                 </div>
             </div>
             <div class="d-flex my-4 gap-3">

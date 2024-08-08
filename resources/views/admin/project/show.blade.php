@@ -21,9 +21,19 @@
                 <hr>
                 <p class="pt-4 pb-1">Tipologia: {{ $project->type ? $project->type->title : 'Nessuna tipologia assegnata' }}
                 </p>
-                <p >Tags:</p>
+                <p>Tecnologia:@if ($project->technologies->isEmpty())
+                        Nessuna tecnologia assegnata
+                    @else
+                        @foreach ($project->technologies as $technology)
+                            {{ $technology->title }}
+                            @if (!$loop->last)
+                                ,
+                            @endif
+                        @endforeach
+                    @endif
+                </p>
                 <hr>
-                <p class="py-3"> Creato da: {{$project->user->name}}</p>
+                <p class="py-3"> Creato da: {{ $project->user->name }}</p>
                 <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-5">
                     <a class="btn btn-primary px-4 me-md-2" href="{{ route('admin.projects.index') }}">Torna alla lista dei
                         post</a>
